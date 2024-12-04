@@ -1,8 +1,7 @@
 import pytesseract
 from PIL import Image, ImageEnhance, ImageFilter
 import re
-import pandas as pd
-import os
+import sqlite3
 from tkinter import Tk, filedialog
 from fuzzywuzzy import fuzz
 from kivy.app import App
@@ -12,27 +11,14 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 
-# Path to the Excel file
-data_file_path = r"C:\Users\saz16\Virtual-Pantry\database\FoodKeeper-Data (1).xls"
-
-# Check if the file exists
-if not os.path.exists(data_file_path):
-    raise FileNotFoundError(f"Excel file not found: {data_file_path}")
-
-# Load food names from the 3rd tab in the Excel file
-food_names = []
-try:
-    df = pd.read_excel(data_file_path, sheet_name=2)  # Read from the 3rd sheet (index 2)
-    food_names = df.iloc[:, 0].dropna().astype(str).str.lower().tolist()  # Lowercase food names
-except Exception as e:
-    print(f"Error loading food data: {e}")
-
+# Connect to the SQLite database
+db_path = r"C:\Users\saz16\Virtual-Pantry\database\FoodData.db"
 
 class MainScreen(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', **kwargs)
 
-        self.food_pantry = []  # Store items with names and dates
+        self.food_pantry = []  # Store matched items with detailed info
 
         self.build_main_menu()
 
@@ -79,17 +65,32 @@ class MainScreen(BoxLayout):
                 self.show_error(str(e))
 
     def extract_and_store_data(self, text):
-        """Extract dates and food names from scanned text."""
-        # Search for dates (format: MM/DD/YYYY or DD/MM/YYYY)
-        date_pattern = r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b"
-        found_date = re.search(date_pattern, text)
-        purchase_date = found_date.group(0) if found_date else "Unknown"
+        """Extract data from scanned text and match it with the database."""
+        print("Extracted Text:")
+        print(text)  # Debug: Print the raw text extracted from the image
+        
+        try:
+            con = sqlite3.connect(db_path)
+            cur = con.cursor()
 
-        # Search for food names with fuzzy matching
-        for line in text.splitlines():
-            for food in food_names:
-                if fuzz.partial_ratio(food, line.lower()) > 80:  # Match threshold
-                    self.food_pantry.append({"name": food.title(), "date": purchase_date})
+            # Clear previous pantry data
+            self.food_pantry = []
+
+            # Loop through each line of the scanned text
+            for line in text.splitlines():
+                for row in cur.execute("SELECT * FROM Produce"):
+                    category, name, min_days, max_days, avg_days, tips = row
+                    if fuzz.partial_ratio(name.lower(), line.lower()) > 80:  # Match threshold
+                        self.food_pantry.append({
+                            "category": category,
+                            "name": name,
+                            "avg_days": avg_days,
+                            "tips": tips
+                        })
+
+            con.close()
+        except Exception as e:
+            self.show_error(f"Error accessing database: {e}")
 
         self.view_pantry()
 
@@ -102,12 +103,20 @@ class MainScreen(BoxLayout):
         content = BoxLayout(orientation='vertical', size_hint_y=None)
         content.bind(minimum_height=content.setter('height'))
 
+        # Add space at the top
+        content.add_widget(Label(text="", size_hint_y=None, height=20))  # Spacer at the top
+
         if not self.food_pantry:
             content.add_widget(Label(text="No items in the pantry."))
         else:
             for item in self.food_pantry:
-                content.add_widget(Label(text=f"{item['name']} - {item['date']}"))
-                content.add_widget(Label(text="", size_hint_y=None, height=30))  # Blank label as a spacer
+                # Display the matched data
+                content.add_widget(Label(text=f"Category: {item['category']}", font_size=16))
+                content.add_widget(Label(text=f"Name: {item['name']}", font_size=16))
+                content.add_widget(Label(text=f"Average Shelf Life: {item['avg_days']} days", font_size=16))
+                content.add_widget(Label(text=f"Tips: {item['tips'] if item['tips'] else 'No tips available'}", font_size=16))
+                # Add a blank line between items
+                content.add_widget(Label(text="", size_hint_y=None, height=20))
 
         scroll_view.add_widget(content)
         self.add_widget(scroll_view)
@@ -130,4 +139,3 @@ class VirtualPantryApp(App):
 
 if __name__ == "__main__":
     VirtualPantryApp().run()
-
