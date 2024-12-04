@@ -107,6 +107,7 @@ class MainScreen(BoxLayout):
         else:
             for item in self.food_pantry:
                 content.add_widget(Label(text=f"{item['name']} - {item['date']}"))
+                content.add_widget(Label(text="", size_hint_y=None, height=30))  # Blank label as a spacer
 
         scroll_view.add_widget(content)
         self.add_widget(scroll_view)
