@@ -9,9 +9,32 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
+import os
+import requests
 
-# SQLite database path
-db_path = r"C:\Users\saz16\Virtual-Pantry\database\FoodData.db"
+# GitHub URL to your FoodData.db
+GITHUB_DB_URL = "https://raw.githubusercontent.com/username/repository/branch/path/to/FoodData.db"
+
+# Local database path
+db_path = os.path.join(os.getcwd(), "FoodData.db")
+
+# Download the database file if it doesn't exist locally
+def download_database():
+    if not os.path.exists(db_path):
+        print("Downloading FoodData.db from GitHub...")
+        try:
+            response = requests.get(GITHUB_DB_URL)
+            response.raise_for_status()  # Raise an error if the request fails
+            with open(db_path, "wb") as db_file:
+                db_file.write(response.content)
+            print("Database downloaded successfully!")
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to download the database: {e}")
+            exit(1)
+
+# Call the download function
+download_database()
+
 
 # Database setup
 def setup_database():
