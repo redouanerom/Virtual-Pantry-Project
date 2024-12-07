@@ -1,8 +1,9 @@
 import pytesseract
 from PIL import Image, ImageEnhance, ImageFilter
-from fuzzywuzzy import fuzz
-from tkinter import Tk, filedialog
+import re
 import sqlite3
+from tkinter import Tk, filedialog
+from fuzzywuzzy import fuzz
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -10,70 +11,56 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 
-# SQLite database path
+# Connect to the SQLite database
 db_path = r"C:\Users\saz16\Virtual-Pantry\database\FoodData.db"
+import sqlite3
+con = sqlite3.connect("FoodData.db")
 
-# Database setup
-def setup_database():
-    try:
-        con = sqlite3.connect(db_path)
-        cur = con.cursor()
+cur = con.cursor()
 
-        # Create the `Produce` table if it doesn't exist
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS Produce (
-                Category TEXT,
-                Name TEXT,
-                Min_days INTEGER,
-                Max_days INTEGER,
-                Avg_days REAL,
-                Tips TEXT
-            );
-        """)
+cur.execute("CREATE TABLE IF NOT EXISTS Produce (Category, Name, Min days, Max days, Avg days, Tips)")
 
-        # Populate the table only if it's empty
-        cur.execute("SELECT COUNT(*) FROM Produce;")
-        if cur.fetchone()[0] == 0:
-            data = [
-                ('Fruit', 'Apples', 21, 21, 21, 'May extend life by one week in the refrigerator'),
-                ('Fruit', 'Bananas', 3, 3, 3, 'Skin may blacken'),
-                ('Fruit', 'Strawberries', 2, 3, 2.5, 'Can be stored up to one year if frozen'),
-                ('Fruit', 'Blueberries', 7, 14, 10.5, ''),
-                ('Fruit', 'Grapes', 7, 7, 7, ''),
-                ('Fruit', 'Strawberries', 2, 3, 2.5, 'Can be stored up to one year if frozen'),
-                ('Fruit', 'Mango', 7, 7, 7, 'Can be safely frozen'),
-                ('Fruit', 'Lemon', 10, 21, 15.5, 'Can be stored outside of fridge for max 10 days'),
-                ('Fruit', 'Lime', 10, 21, 15.5, 'Can be stored outside of fridge for max 10 days'),
-                ('Fruit', 'Avocado', 3, 4, 3.5, 'Applies to ripe fruit'),
-                ('Fruit', 'Cherries', 2, 3, 2.5, ''),
-                ('Vegetable', 'Potatoes', 30, 60, 45, 'Do not refrigerate'),
-                ('Vegetable', 'Mushrooms', 3, 7, 3.5, ''),
-                ('Vegetable', 'Pepper', 4, 14, 9, ''),
-                ('Vegetable', 'Celery', 7, 14, 10.5, ''),
-                ('Vegetable', 'Cauliflower', 3, 5, 4, ''),
-                ('Vegetable', 'Broccoli', 3, 5, 4, ''),
-                ('Vegetable', 'Asparagus', 3, 4, 3.5, ''),
-                ('Vegetable', 'Corn', 1, 2, 1.5, ''),
-                ('Vegetable', 'Cucumbers', 4, 6, 5, ''),
-                ('Vegetable', 'Garlic', 3, 14, 8.5, 'Store unbroken bulbs in pantry, individual cloves in refrigerator'),
-                ('Vegetable', 'Onion', 30, 30, 30, 'Can be stored in pantry for less time'),
-                ('Vegetable', 'Cilantro', 14, 21, 17.5, ''),
-                # Add more entries as needed
-            ]
-            cur.executemany("INSERT INTO Produce VALUES (?, ?, ?, ?, ?, ?);", data)
-            con.commit()
+#Execute once to populate the data into the table
+#If executed multiple times, the data will be duplicated 
+# data = [
+#                 ('Fruit','Apples', 21, 21, 21, 'May extend life by one week in the refrigerator'),
+#                 ('Fruit', 'Bananas', 3, 3, 3, 'Skin may blacken'),
+#                 ('Fruit', 'Blueberries', 7, 14, 10.5, ''),
+#                 ('Fruit', 'Grapes', 7, 7, 7, ''),
+#                 ('Fruit', 'Strawberries', 2, 3, 2.5, 'Can be stored up to one year if frozen'),
+#                 ('Fruit', 'Mango', 7, 7, 7, 'Can be safely frozen'),
+#                 ('Fruit', 'Lemon', 10, 21, 15.5, 'Can be stored outside of fridge for max 10 days'),
+#                 ('Fruit', 'Lime', 10, 21, 15.5, 'Can be stored outside of fridge for max 10 days'),
+#                 ('Fruit', 'Avocado', 3, 4, 3.5, 'Applies to ripe fruit'),
+#                 ('Fruit', 'Cherries', 2, 3, 2.5, ''),
+#                 ('Vegetable', 'Potatoes', 30, 60, 45, 'Do not refrigerate'),
+#                 ('Vegetable', 'Mushrooms', 3, 7, 3.5, ''),
+#                 ('Vegetable', 'Pepper', 4, 14, 9, ''),
+#                 ('Vegetable', 'Celery', 7, 14, 10.5, ''),
+#                 ('Vegetable', 'Cauliflower', 3, 5, 4, ''),
+#                 ('Vegetable', 'Broccoli', 3, 5, 4, ''),
+#                 ('Vegetable', 'Asparagus', 3, 4, 3.5, ''),
+#                 ('Vegetable', 'Corn', 1, 2, 1.5, ''),
+#                 ('Vegetable', 'Cucumbers', 4, 6, 5, ''),
+#                 ('Vegetable', 'Garlic', 3, 14, 8.5, 'Store unbroken bulbs in pantry, individual cloves in refrigerator'),
+#                 ('Vegetable', 'Onion', 30, 30, 30, 'Can be stored in pantry for less time'),
+#                 ('Vegetable', 'Cilantro', 14, 21, 17.5, ''),
+# ]
 
-        con.close()
-    except sqlite3.Error as e:
-        print(f"Database setup error: {e}")
+# cur.executemany("INSERT INTO Produce VALUES(?, ?, ?, ?, ?, ?)", data)
+# con.commit()
 
-setup_database()
+for row in cur.execute("SELECT Name, Avg days, Tips FROM Produce"):
+    print(row)
+
+con.close()
 
 class MainScreen(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', **kwargs)
 
         self.food_pantry = []  # Store matched items with detailed info
+
         self.build_main_menu()
 
     def build_main_menu(self):
@@ -100,8 +87,6 @@ class MainScreen(BoxLayout):
         img = img.filter(ImageFilter.MedianFilter())  # Denoise
         enhancer = ImageEnhance.Contrast(img)
         img = enhancer.enhance(2)  # Increase contrast
-        img = img.resize((int(img.width * 1.5), int(img.height * 1.5)))  # Resize for better OCR
-        img = img.point(lambda p: p > 128 and 255)  # Thresholding
         return img
 
     def scan_receipt(self, instance):
@@ -123,46 +108,69 @@ class MainScreen(BoxLayout):
     def extract_and_store_data(self, text):
         """Extract data from scanned text and match it with the database."""
         print("Extracted Text:")
-        print(text)  # Debugging: Print raw text
+        print(text)  # Debug: Print the raw text extracted from the image
+        
 
-        try:
-            con = sqlite3.connect(db_path)
+        try:  
+            con = sqlite3.connect(db_path)  # Connect to the SQLite database
             cur = con.cursor()
 
             # Clear previous pantry data
             self.food_pantry = []
 
+            # Loop through each line of the scanned text
             for line in text.splitlines():
-                line = line.strip()  # Remove leading/trailing spaces
+                line = line.strip()  # Remove any leading/trailing spaces
                 if not line:  # Skip empty lines
                     continue
 
-                print(f"Processing line: {line}")  # Debugging
+                print(f"Processing line: {line}")  # Debug: Log each line being processed
 
-                # Fetch all rows from the database
+                # Query database to fetch all rows
                 cur.execute("SELECT * FROM Produce")
                 rows = cur.fetchall()
 
-                # Match each row's name with the scanned text using fuzzy matching
+                # Match each database entry's `name` column against the line
                 for row in rows:
+                    print(f"Database Row: {row}")
                     category, name, min_days, max_days, avg_days, tips = row
-                    if fuzz.partial_ratio(name.lower(), line.lower()) > 80:  # Adjust threshold
-                        print(f"Matched: {line} -> {name}")
+                    # Use fuzzy matching to compare `name` with the scanned line
+                    if fuzz.partial_ratio(name.lower(), line.lower()) > 80:  # Threshold for match
+                        print(f"Matched: {line} with database entry: {name}")
                         self.food_pantry.append({
                             "category": category,
                             "name": name,
                             "avg_days": avg_days,
                             "tips": tips
                         })
-                        break  # Stop looking for matches for this line
+                        break  # Move to the next line after a match is found
 
-            con.close()
+            con.close()  # Close the database connection
 
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
+        except Exception as e:
+            print(f"Error accessing database: {e}")
             self.show_error(f"Error accessing database: {e}")
 
         self.view_pantry()
+    db_path = "C:\\Users\\saz16\\Virtual-Pantry\\database\\FoodData.db"    
+    try:
+        con = sqlite3.connect(db_path)
+        cur = con.cursor()
+
+        # List all tables in the database
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = cur.fetchall()
+        print("Tables in database:", tables)
+
+        # Test query from Produce table
+        cur.execute("SELECT * FROM Produce")
+        rows = cur.fetchall()
+        for row in rows:
+            print("Row:", row)
+
+        con.close()
+    except Exception as e:
+        print(f"Database error: {e}")
 
     def view_pantry(self, instance=None):
         """Display the pantry list."""
@@ -173,12 +181,12 @@ class MainScreen(BoxLayout):
         content = BoxLayout(orientation='vertical', size_hint_y=None)
         content.bind(minimum_height=content.setter('height'))
 
+        # Add space at the top
         content.add_widget(Label(text="", size_hint_y=None, height=20))  # Spacer at the top
 
         if not self.food_pantry:
             content.add_widget(Label(text="No items in the pantry."))
         else:
-            # Add each item in the pantry as its own block
             for item in self.food_pantry:
                 item_layout = BoxLayout(orientation='vertical', size_hint_y=None, height=120, padding=10, spacing=10)
                 item_layout.add_widget(Label(text=f"Category: {item['category']}", font_size=16, halign="left", valign="middle"))
@@ -191,6 +199,7 @@ class MainScreen(BoxLayout):
         scroll_view.add_widget(content)
         self.add_widget(scroll_view)
 
+        # Add a Back to Main Menu button
         back_button = Button(text="Back to Main Menu", size_hint_y=0.1)
         back_button.bind(on_press=lambda instance: self.build_main_menu())
         self.add_widget(back_button)
