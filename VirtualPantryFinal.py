@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import pytesseract
 from PIL import Image, ImageEnhance, ImageFilter
 from fuzzywuzzy import fuzz
@@ -6,14 +6,16 @@ import sqlite3
 import os
 import requests
 
-# Flask app setup
+# Flask application setup
 app = Flask(__name__)
-
-# Database path
-db_path = os.path.join(os.getcwd(), "FoodData.db")
+app.secret_key = 'your_secret_key'
 
 # GitHub URL to your FoodData.db
 GITHUB_DB_URL = "https://raw.githubusercontent.com/username/repository/branch/path/to/FoodData.db"
+db_path = os.path.join(os.getcwd(), "FoodData.db")
+
+# Pantry array to store matched items
+food_pantry = []
 
 # Download the database file if it doesn't exist locally
 def download_database():
@@ -21,7 +23,7 @@ def download_database():
         print("Downloading FoodData.db from GitHub...")
         try:
             response = requests.get(GITHUB_DB_URL)
-            response.raise_for_status()  # Raise an error if the request fails
+            response.raise_for_status()
             with open(db_path, "wb") as db_file:
                 db_file.write(response.content)
             print("Database downloaded successfully!")
@@ -29,7 +31,6 @@ def download_database():
             print(f"Failed to download the database: {e}")
             exit(1)
 
-# Call the download function
 download_database()
 
 # Database setup
@@ -37,8 +38,6 @@ def setup_database():
     try:
         con = sqlite3.connect(db_path)
         cur = con.cursor()
-
-        # Create the `Produce` table if it doesn't exist
         cur.execute("""
             CREATE TABLE IF NOT EXISTS Produce (
                 Category TEXT,
@@ -49,76 +48,99 @@ def setup_database():
                 Tips TEXT
             );
         """)
-
-        # Populate the table only if it's empty
-        cur.execute("SELECT COUNT(*) FROM Produce;")
-        if cur.fetchone()[0] == 0:
-            data = [
-                ('Fruit', 'Apples', 21, 21, 21, 'May extend life by one week in the refrigerator'),
-                ('Fruit', 'Bananas', 3, 3, 3, 'Skin may blacken'),
-                ('Vegetable', 'Potatoes', 30, 60, 45, 'Do not refrigerate'),
-            ]
-            cur.executemany("INSERT INTO Produce VALUES (?, ?, ?, ?, ?, ?);", data)
-            con.commit()
-
+        con.commit()
         con.close()
     except sqlite3.Error as e:
         print(f"Database setup error: {e}")
 
 setup_database()
 
-# Preprocess image for better OCR results
-def preprocess_image(filepath):
-    img = Image.open(filepath)
-    img = img.convert('L')  # Convert to grayscale
-    img = img.filter(ImageFilter.MedianFilter())  # Denoise
+from flask import jsonify
+
+@app.route('/get_produce', methods=['GET'])
+def get_produce():
+    """Endpoint to fetch pantry items."""
+    return jsonify({"produce": food_pantry})
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        # Authentication logic (example)
+        if email == "test@example.com" and password == "password":
+            session['logged_in'] = True
+            return redirect(url_for('pantry'))
+        else:
+            flash('Invalid credentials. Please try again.')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+@app.route('/pantry')
+def pantry():
+    return render_template('pantry.html', items=food_pantry)
+
+@app.route('/scan', methods=['GET', 'POST'])
+def scan():
+    if request.method == 'POST':
+        file = request.files.get('receipt')
+        if file and file.filename != '':
+            try:
+                # Preprocess the image
+                img = preprocess_image(file)
+
+                # Extract text using OCR
+                text = pytesseract.image_to_string(img)
+
+                # Extract and store data in the pantry
+                extract_and_store_data(text)
+
+                # Provide user feedback
+                flash('Items successfully scanned and added to your pantry!')
+                return redirect(url_for('pantry'))
+            except Exception as e:
+                flash(f"Error processing receipt: {e}")
+                return redirect(url_for('scan'))
+        else:
+            flash("No file selected. Please upload a receipt.")
+            return redirect(url_for('scan'))
+    return render_template('scan.html')
+
+def preprocess_image(file):
+    """Preprocess the uploaded image for better OCR results."""
+    img = Image.open(file)
+    img = img.convert('L')
+    img = img.filter(ImageFilter.MedianFilter())
     enhancer = ImageEnhance.Contrast(img)
-    img = enhancer.enhance(2)  # Increase contrast
-    img = img.resize((int(img.width * 1.5), int(img.height * 1.5)))  # Resize for better OCR
-    img = img.point(lambda p: p > 128 and 255)  # Thresholding
+    img = enhancer.enhance(2)
+    img = img.resize((int(img.width * 1.5), int(img.height * 1.5)))
+    img = img.point(lambda p: p > 128 and 255)
     return img
 
-# Endpoint to scan and process receipt image
-@app.route('/scan-receipt', methods=['POST'])
-def scan_receipt():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-
-    filepath = os.path.join(os.getcwd(), file.filename)
-    file.save(filepath)
-
-    try:
-        img = preprocess_image(filepath)
-        text = pytesseract.image_to_string(img)
-        os.remove(filepath)  # Clean up the temporary file
-        return extract_and_store_data(text)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# Extract data from OCR and match with database
 def extract_and_store_data(text):
+    """Extract data from scanned text and match it with the database."""
+    global food_pantry
     try:
         con = sqlite3.connect(db_path)
         cur = con.cursor()
-        food_pantry = []
-
         for line in text.splitlines():
             line = line.strip()
             if not line:
                 continue
-
-            # Fetch all rows from the database
             cur.execute("SELECT * FROM Produce")
             rows = cur.fetchall()
-
-            # Match each row's name with the scanned text using fuzzy matching
             for row in rows:
                 category, name, min_days, max_days, avg_days, tips = row
-                if fuzz.partial_ratio(name.lower(), line.lower()) > 80:  # Adjust threshold
+                if fuzz.partial_ratio(name.lower(), line.lower()) > 80:
                     food_pantry.append({
                         "category": category,
                         "name": name,
@@ -126,30 +148,9 @@ def extract_and_store_data(text):
                         "tips": tips
                     })
                     break
-
         con.close()
-        return jsonify({'pantry': food_pantry})
     except sqlite3.Error as e:
-        return jsonify({'error': f"Database error: {e}"}), 500
+        print(f"Database error: {e}")
 
-# Endpoint to fetch pantry data
-@app.route('/api/pantry', methods=['GET'])
-def get_pantry():
-    try:
-        con = sqlite3.connect(db_path)
-        cur = con.cursor()
-        cur.execute("SELECT * FROM Produce")
-        rows = cur.fetchall()
-        con.close()
-
-        pantry = [
-            {"category": row[0], "name": row[1], "avg_days": row[4], "tips": row[5]}
-            for row in rows
-        ]
-        return jsonify({'pantry': pantry})
-    except sqlite3.Error as e:
-        return jsonify({'error': f"Database error: {e}"}), 500
-
-# Run the Flask app
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)

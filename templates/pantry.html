@@ -1,113 +1,73 @@
-<!DOCTYPE html>
-<html data-bs-theme="light" lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>Virtual Pantry</title>
-    <meta name="description" content="Virtual Pantry Front-end">
-    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic&amp;display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Cabin:700&amp;display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Aboreto&amp;display=swap">
-    <link rel="stylesheet" href="assets/css/Drag--Drop-Upload-Form.css">
-    <link rel="stylesheet" href="assets/css/Grid-and-List-view-V10-style.css">
-    <link rel="stylesheet" href="assets/css/Grid-and-List-view-V10.css">
-</head>
+{% block title %}Pantry - Virtual Pantry{% endblock %}
 
-<body>
-    <header>
-        <div data-bss-parallax-bg="true" style="height: 600px;background-image: url(&quot;assets/img/table-full-fruits-nuts-with-wooden-background_777078-2918.avif&quot;);background-position: center;background-size: cover;">
-            <nav class="navbar navbar-expand-md text-end" style="background: rgba(17,17,17,0.42);">
-                <div class="container-fluid">
-                    <a class="navbar-brand fs-2" href="#" style="color: var(--bs-light-bg-subtle);font-family: Aboreto, serif;">Group 8</a>
-                    <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1">
-                        <span class="visually-hidden">Toggle navigation</span>
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse text-end" id="navcol-1">
-                        <ul class="navbar-nav ms-auto">
-                            <li class="nav-item"><a class="btn btn-primary fs-5 fw-semibold border rounded-circle border-3" role="button" style="margin-left: 20px;background: rgba(66,220,163,0);color: var(--bs-white);border-style: dashed;border-color: var(--bs-white);font-family: Aboreto, serif;">Login</a></li>
-                            <li class="nav-item"><a class="btn btn-primary fs-5 fw-semibold border rounded-circle border-3" role="button" style="margin-left: 20px;background: rgba(66,220,163,0);color: var(--bs-white);border-style: dashed;border-color: var(--bs-white);font-family: Aboreto, serif;">SCAN</a></li>
-                            <li class="nav-item"><a class="btn btn-primary fs-5 fw-semibold border rounded-circle border-3" role="button" style="margin-left: 20px;background: rgba(66,220,163,0);color: var(--bs-white);border-style: dashed;border-color: var(--bs-white);font-family: Aboreto, serif;">Pantry</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-            <div class="container">
-                <div class="row">
-                    <div class="col">
-                        <h1 class="fw-bolder text-center" style="font-family: Aboreto, serif;font-size: 98px;">Pantry</h1>
-                    </div>
-                </div>
-            </div>
+{% block page_title %}
+Pantry
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container mt-5">
+        <div class="row" id="pantry-grid">
+            <!-- Items will be dynamically inserted here -->
         </div>
-    </header>
+    </div>
+</main>
 
-    <main>
-        <div class="container mt-5">
-            <div class="row" id="pantry-grid">
-                <!-- Items will be dynamically inserted here -->
-            </div>
-        </div>
-    </main>
-
-    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
-    <script>
-        // Function to fetch pantry data from the backend
-        async function fetchPantryData() {
-            try {
-                const response = await fetch('http://127.0.0.1:5000/get-produce'); // Flask endpoint
-                if (!response.ok) {
-                    throw new Error('Failed to fetch pantry data.');
-                }
-                const data = await response.json();
-                populatePantryGrid(data.produce);
-            } catch (error) {
-                console.error(error);
-                alert('Error fetching pantry data. Please try again later.');
+<script>
+    // Function to fetch pantry data from the backend
+    async function fetchPantryData() {
+        try {
+            const response = await fetch('{{ url_for("get_produce") }}'); // Flask endpoint
+            if (!response.ok) {
+                throw new Error('Failed to fetch pantry data.');
             }
+            const data = await response.json();
+            populatePantryGrid(data.produce);
+        } catch (error) {
+            console.error(error);
+            alert('Error fetching pantry data. Please try again later.');
         }
+    }
 
-        // Function to populate the pantry grid with items
-        function populatePantryGrid(produce) {
-            const grid = document.getElementById('pantry-grid');
-            grid.innerHTML = ''; // Clear existing items
+    // Function to populate the pantry grid with items
+    function populatePantryGrid(produce) {
+        const grid = document.getElementById('pantry-grid');
+        grid.innerHTML = ''; // Clear existing items
 
-            produce.forEach(item => {
-                // Create a Bootstrap card for each item
-                const col = document.createElement('div');
-                col.className = 'col-md-4 mb-4';
+        produce.forEach(item => {
+            // Create a Bootstrap card for each item
+            const col = document.createElement('div');
+            col.className = 'col-md-4 mb-4';
 
-                const card = document.createElement('div');
-                card.className = 'card h-100';
+            const card = document.createElement('div');
+            card.className = 'card h-100';
 
-                const cardBody = document.createElement('div');
-                cardBody.className = 'card-body';
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
 
-                const cardTitle = document.createElement('h5');
-                cardTitle.className = 'card-title';
-                cardTitle.textContent = item.name;
+            const cardTitle = document.createElement('h5');
+            cardTitle.className = 'card-title';
+            cardTitle.textContent = item.name;
 
-                const cardText = document.createElement('p');
-                cardText.className = 'card-text';
-                cardText.innerHTML = `
-                    <strong>Category:</strong> ${item.category}<br>
-                    <strong>Average Shelf Life:</strong> ${item.avg_days} days<br>
-                    <strong>Tips:</strong> ${item.tips || 'No tips available'}
-                `;
+            const cardText = document.createElement('p');
+            cardText.className = 'card-text';
+            cardText.innerHTML = `
+                <strong>Category:</strong> ${item.category}<br>
+                <strong>Average Shelf Life:</strong> ${item.avg_days} days<br>
+                <strong>Tips:</strong> ${item.tips || 'No tips available'}
+            `;
 
-                cardBody.appendChild(cardTitle);
-                cardBody.appendChild(cardText);
-                card.appendChild(cardBody);
-                col.appendChild(card);
-                grid.appendChild(col);
-            });
-        }
+            cardBody.appendChild(cardTitle);
+            cardBody.appendChild(cardText);
+            card.appendChild(cardBody);
+            col.appendChild(card);
+            grid.appendChild(col);
+        });
+    }
 
-        // Fetch and display the pantry data when the page loads
-        document.addEventListener('DOMContentLoaded', fetchPantryData);
-    </script>
-</body>
-
-</html>
+    // Fetch and display the pantry data when the page loads
+    document.addEventListener('DOMContentLoaded', fetchPantryData);
+</script>
+{% endblock %}
