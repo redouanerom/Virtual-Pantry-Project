@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Pantry - Virtual Pantry{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container mt-5">
+        <div class="col-md-8 col-xl-6 text-center mx-auto">
+            <h2 class="fw-bolder" style="font-family: Aboreto, serif; font-size: 70px; margin-bottom: 15px;">Pantry</h2>
+        <div class="row" id="pantry-grid">
+            <!-- Items will be dynamically inserted here -->
+        </div>
+    </div>
+</main>
+
+<script>
+    // Function to fetch pantry data from the backend
+    async function fetchPantryData() {
+        try {
+            const response = await fetch('{{ url_for("get_produce") }}'); // Flask endpoint
+            if (!response.ok) {
+                throw new Error('Failed to fetch pantry data.');
+            }
+            const data = await response.json();
+            populatePantryGrid(data.produce);
+        } catch (error) {
+            console.error(error);
+            alert('Error fetching pantry data. Please try again later.');
+        }
+    }
+
+    // Function to populate the pantry grid with items
+    function populatePantryGrid(produce) {
+        const grid = document.getElementById('pantry-grid');
+        grid.innerHTML = ''; // Clear existing items
+
+        produce.forEach(item => {
+            // Create a Bootstrap card for each item
+            const col = document.createElement('div');
+            col.className = 'col-md-4 mb-4';
+
+            const card = document.createElement('div');
+            card.className = 'card h-100';
+
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
+
+            const cardTitle = document.createElement('h5');
+            cardTitle.className = 'card-title';
+            cardTitle.textContent = item.name;
+
+            const cardText = document.createElement('p');
+            cardText.className = 'card-text';
+            cardText.innerHTML = `
+                <strong>Category:</strong> ${item.category}<br>
+                <strong>Average Shelf Life:</strong> ${item.avg_days} days<br>
+                <strong>Tips:</strong> ${item.tips || 'No tips available'}
+            `;
+
+            cardBody.appendChild(cardTitle);
+            cardBody.appendChild(cardText);
+            card.appendChild(cardBody);
+            col.appendChild(card);
+            grid.appendChild(col);
+        });
+    }
+
+    // Fetch and display the pantry data when the page loads
+    document.addEventListener('DOMContentLoaded', fetchPantryData);
+</script>
+{% endblock %}

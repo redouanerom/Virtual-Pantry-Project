@@ -7,7 +7,7 @@ cur.execute("CREATE TABLE IF NOT EXISTS Produce (Category, Name, Min days, Max d
 
 #Execute once to populate the data into the table
 #If executed multiple times, the data will be duplicated 
- data = [
+data = [
                  ('Fruit','Apples', 21, 21, 21, 'May extend life by one week in the refrigerator'),
                  ('Fruit', 'Bananas', 3, 3, 3, 'Skin may blacken'),
                  ('Fruit', 'Blueberries', 7, 14, 10.5, ''),
@@ -32,8 +32,8 @@ cur.execute("CREATE TABLE IF NOT EXISTS Produce (Category, Name, Min days, Max d
                  ('Vegetable', 'Cilantro', 14, 21, 17.5, ''),
  ]
 
- cur.executemany("INSERT INTO Produce VALUES(?, ?, ?, ?, ?, ?)", data)
- con.commit()
+cur.executemany("INSERT INTO Produce VALUES(?, ?, ?, ?, ?, ?)", data)
+con.commit()
 
 for row in cur.execute("SELECT Name, Avg days, Tips FROM Produce"):
     print(row)

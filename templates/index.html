@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Virtual Pantry{% endblock %}
+
+{% block content %}
+<div class="container d-lg-flex align-items-lg-center" style="height: 530px;">
+    <div class="row" style="height: 366px;">
+        <div class="col-md-6 col-lg-6" style="height: 400px;">
+            <h1 class="display-1 fw-bolder lh-sm text-center" 
+                style="height: 230px;font-family: Aboreto, serif;
+                    font-size: 90px;--bs-primary: #E07A77;
+                    --bs-primary-rgb: 224,122,119;
+                    --bs-danger: #C34A4A;--bs-danger-rgb: 195,74,74;
+                    --bs-dark: #2B2B2B;
+                    --bs-dark-rgb: 43,43,43;
+                    --bs-body-color: #FFFFFF;
+                    --bs-secondary: #F5E3C3;
+                    --bs-secondary-rgb: 245,227,195;
+                    --bs-success: #6B8E23;
+                    --bs-success-rgb: 107,142,35;
+                    --bs-info: #F5E3C3;
+                    --bs-info-rgb: 245,227,195;
+                    --bs-warning: #F5A623;
+                    --bs-warning-rgb: 245,166,35;
+                    --bs-light: #F5E3C3;
+                    --bs-light-rgb: 245,227,195;">
+                    Virtual Pantry
+            </h1>
+            <p style="font-family: Aboreto, serif;text-align: center;font-size: 20px;">Limiting Food Waste Since 2024</p>
+        </div>
+        <div class="col-md-6 d-lg-flex justify-content-lg-center align-items-lg-center" style="height: 400px;">
+            <a class="btn btn-primary fw-semibold text-center border rounded-circle border-5 d-lg-flex justify-content-lg-center align-items-lg-center" 
+                role="button" 
+                style="height: 180px;
+                    width: 300px;
+                    text-align: center;
+                    color: var(--bs-light-bg-subtle);
+                    font-family: Aboreto, serif;
+                    font-size: 40px;background: rgba(66,220,163,0);
+                    " href="{{ url_for('login') }}">Get&nbsp; Started</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

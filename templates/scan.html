@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Scan - Virtual Pantry{% endblock %}
+
+
+{% block content %}
+<section class="position-relative py-4 py-xl-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-md-8 col-xl-6 text-center mx-auto">
+                <h2 class="fw-bolder" style="font-family: Aboreto, serif; font-size: 70px; margin-bottom: 15px;">SCAN</h2>
+                <p class="w-lg-50" style="font-family: Aboreto, serif;">Upload a receipt to scan and populate your pantry.</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <form method="POST" action="{{ url_for('scan') }}" enctype="multipart/form-data">
+                    <div class="form-group mb-3">
+                        <label for="receipt" class="form-label">Upload Receipt:</label>
+                        <input type="file" id="receipt" name="receipt" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Scan Receipt</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
