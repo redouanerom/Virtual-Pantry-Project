@@ -67,23 +67,6 @@ def get_produce():
 def index():
     return render_template('index.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        # Authentication logic (example)
-        if email == "test@example.com" and password == "password":
-            session['logged_in'] = True
-            return redirect(url_for('pantry'))
-        else:
-            flash('Invalid credentials. Please try again.')
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
 
 @app.route('/pantry')
 def pantry():
