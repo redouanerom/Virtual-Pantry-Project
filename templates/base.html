@@ -4,7 +4,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>{% block title %}Virtual Pantry{% endblock %}</title>
     <meta name="description" content="Virtual Pantry Front-end">
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic&amp;display=swap">
@@ -18,9 +17,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/Lightbox-Gallery-baguetteBox.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/Login-Form-Basic-icons.css') }}">
 </head>
-<body>
+<body style="background: url(static/assets/img/table-full-fruits-nuts-with-wooden-background_777078-2918.avif) center / cover no-repeat, linear-gradient(#170f0f 0%, rgb(64,48,37) 29%, rgb(126,104,88) 62%, #896d43);">
     <header>
-        <div data-bss-parallax-bg="true" style="height: 600px; background-image: url(static/assets/img/table-full-fruits-nuts-with-wooden-background_777078-2918.avif); background-position: center; background-size: cover;">
+        <div style="height: fit-content;">
             <nav class="navbar navbar-expand-md text-end" style="background: rgba(17,17,17,0.42);">
                 <div class="container-fluid">
                     <a class="navbar-brand fs-2" href="#" style="color: var(--bs-light-bg-subtle);font-family: Aboreto, serif;">Group 8</a>
@@ -49,14 +48,11 @@
         </div>
     </header>
     <main class="container my-5"
-        <div class="text-center my-4">
-            <h1 class="fw-bolder" style="font-family: Aboreto, serif;">
-                {% block page_title %}{% endblock %}
-            </h1>
-        </div>
-        <div class="content-section">
-            {% block content %}
-            {% endblock %}
+        <div style="height: auto;">
+            <div class="content-section">
+                {% block content %}
+                {% endblock %}
+            </div>
         </div>
     </main>
 
