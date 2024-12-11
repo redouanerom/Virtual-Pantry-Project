@@ -1,0 +1,5 @@
+tesseract-ocr
+libtesseract-dev
+libjpeg-dev
+zlib1g-dev
+heroku buildpacks:add --index 1 heroku-community/apt
