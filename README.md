@@ -2,5 +2,15 @@
 
 ## Instructions to Acces
 
-Please click on this link to access the virtual pantry website. The OCR is very selective with scanable files so please us the provided file Receipt.png to complete the demo.
-**Update** We could not get the deployment of our wesite to run outside of the local computer it was configured on. The source code for our project from the demo is inclided in VirtualPantryFinal.py, all files are companion files except for VirtualPantry3.py, and FoodKeeper-Data.xls. Userdata.py was our attempt to implement notifications that we were not able to implement.  
+1. Please clone the github using the following comand in terminal
+  'git clone https://github.com/redouanerom/Virtual-Pantry-Project.git'
+2. Download the necessary libraries with these commands through MSYS2 terminal:
+   Link to install MSYS2: https://www.msys2.org 
+  'pip install pytesseract'
+  'pip install pillow'
+  'pip install fuzzywuzzy'
+  'pip install python-Levenshtein'
+  'pacman -S mingw-w64-x86_64-tesseract-ocr'
+  Verify using : 'tesseract --version'
+4. Run the 'VirtualPantryFinal.py' file and click on the local IP address in terminal to access the website
+5. Use the 'Reciept.png' file to upload to scan and populate items into pantry 
