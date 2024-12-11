@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 # GitHub URL to your FoodData.db
-GITHUB_DB_URL = "https://raw.githubusercontent.com/username/repository/branch/path/to/FoodData.db"
+GITHUB_DB_URL = "https://github.com/redouanerom/Virtual-Pantry-Project/raw/refs/heads/main/FoodData.db"
 db_path = os.path.join(os.getcwd(), "FoodData.db")
 
 # Pantry array to store matched items
